@@ -7,6 +7,7 @@ let multiplier = 1;
 let throwsCurrentRound = 3;
 let isDouble = false;
 let history = [];
+let startPlayerIndex = 0;
 
 //Show possible checkout
 const checkoutTable = {
@@ -395,6 +396,8 @@ function resetScores() {
     p.currentRoundThrows = [];
     p.lastRoundThrows = [];
   });
+  startPlayerIndex = (startPlayerIndex + 1) % players.length;
+  currentPlayerIndex = startPlayerIndex;
   gameStarted = false;
   throwsCurrentRound = 3;
   updatePlayerList();
