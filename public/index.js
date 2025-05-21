@@ -255,7 +255,7 @@ btnUndo.addEventListener("click", undoLastThrow);
 
 changeBtn501.addEventListener("click", () => {
   initialScore = 501;
-  // Trainings-Modus verlassen:
+  // Leave Traing Mode:
   players = [];
   currentPlayerIndex = 0;
   gameMode = "normal";
@@ -263,7 +263,7 @@ changeBtn501.addEventListener("click", () => {
   throwsCurrentRound = 3;
   updatePlayerList();
   newPlayerNameInput.style.display = "block";
-  updateLog(""); // Log leeren, optional
+  updateLog("");
 });
 changeBtn301.addEventListener("click", () => {
   initialScore = 301;
@@ -356,7 +356,7 @@ function handleScore(value) {
       return;
     }
     if (newScore === 0 && !doubleFlagThisThrow) {
-      alert("Du musst auf ein Double checken!");
+      alert("Check out with double!");
       currentPlayer.score = currentPlayer.roundStart;
       currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
       currentPlayer.currentRoundThrows = [];
@@ -462,7 +462,7 @@ function handleTrainingScore(player, score) {
     player.currentAttempts = 0;
     if (player.nextTarget > 20) {
       saveTraining(player);
-      alert("Training abgeschlossen!");
+      alert("Training finished");
       return;
     }
   }

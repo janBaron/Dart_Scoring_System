@@ -11,7 +11,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'Dart_Scores',
-  password: 'your-postgres-password',
+  password: 'postgres',
   port: 5432,
 });
 
@@ -120,23 +120,34 @@ app.post('/api/updateStats', async (req, res) => {
   const { playerName, dartsThrown, checkout, isWin, scoreStart } = req.body;
 
   if (!playerName || dartsThrown == null || typeof isWin === 'undefined') {
-    return res.status(400).json({ error: "Missing required data." });
+    return res.status(400).json({ error: "Missing data" });
   }
 
   try {
+    // Get player ID and name from DB
     const playerRes = await pool.query('SELECT id, name FROM players WHERE name = $1', [playerName]);
     if (playerRes.rows.length === 0) {
-      return res.status(404).json({ error: "Player not found." });
+      return res.status(404).json({ error: "Player not found" });
     }
-
     const playerId = playerRes.rows[0].id;
     const playerNameDb = playerRes.rows[0].name;
-    const avg = ((scoreStart || 501) / dartsThrown) * 3;
 
-    const existingRes = await pool.query('SELECT * FROM game_stats WHERE player_id = $1', [playerId]);
+    // Calculate average only for winners
+    const avg = isWin ? ((scoreStart || 501) / dartsThrown) * 3 : 0;
 
-    if (existingRes.rows.length > 0) {
-      const existing = existingRes.rows[0];
+    // Check if entry exists
+    const result = await pool.query('SELECT * FROM game_stats WHERE player_id = $1', [playerId]);
+
+    if (result.rows.length > 0) {
+      const existing = result.rows[0];
+      const updatedGames = existing.games_played + 1;
+      const updatedWins = isWin ? existing.wins + 1 : existing.wins;
+      const updatedLosses = !isWin ? existing.losses + 1 : existing.losses;
+      const updatedHighCheckout = Math.max(existing.highest_checkout || 0, checkout || 0);
+      const updatedHighAverage = isWin
+        ? Math.max(existing.highest_9dart_avg || 0, avg)
+        : existing.highest_9dart_avg;
+
       await pool.query(
         `UPDATE game_stats
          SET games_played = $1,
@@ -146,15 +157,7 @@ app.post('/api/updateStats', async (req, res) => {
              highest_9dart_avg = $5,
              player_name = $6
          WHERE player_id = $7`,
-        [
-          existing.games_played + 1,
-          isWin ? existing.wins + 1 : existing.wins,
-          !isWin ? existing.losses + 1 : existing.losses,
-          Math.max(existing.highest_checkout || 0, checkout || 0),
-          Math.max(existing.highest_9dart_avg || 0, avg),
-          playerNameDb,
-          playerId
-        ]
+        [updatedGames, updatedWins, updatedLosses, updatedHighCheckout, updatedHighAverage, playerNameDb, playerId]
       );
     } else {
       await pool.query(
@@ -166,7 +169,7 @@ app.post('/api/updateStats', async (req, res) => {
           isWin ? 1 : 0,
           isWin ? 0 : 1,
           checkout || 0,
-          avg
+          isWin ? avg : 0
         ]
       );
     }
@@ -177,6 +180,7 @@ app.post('/api/updateStats', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Get stats pages
 

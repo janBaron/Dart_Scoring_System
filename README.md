@@ -4,6 +4,14 @@ A web-based dart scoring application for **multiplayer 501 and 301 games** as we
 
 ---
 
+## 🎥 Demo Video
+
+See the Dart Scoring System in action:
+
+[![Watch the video](https://img.youtube.com/vi/XPSroIYUkwc/hqdefault.jpg)](https://www.youtube.com/watch?v=XPSroIYUkwc)
+
+---
+
 ## 📦 Features
 
 - Multiplayer support for 501 and 301 dart games
