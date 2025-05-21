@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multiplayer Stats</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    th { cursor: pointer; }
+    .sorted-asc::after { content: " ▲"; }
+    .sorted-desc::after { content: " ▼"; }
+    body { background-color: #1a1822; color: #fff; }
+    .table-dark th, .table-dark td { vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <div class="container my-5">
+    <h2>Multiplayer Stats</h2>
+    <div id="stats-table"></div>
+    <button class="btn btn-secondary mt-3" onclick="window.close()">Close Tab</button>
+  </div>
+
+  <script>
+    let rows = [];
+    let currentSort = { key: null, dir: 1 };
+
+    function formatDate(dateString) {
+      if (!dateString) return "";
+      const d = new Date(dateString);
+      if (isNaN(d)) return dateString;
+      const z = n => (n < 10 ? "0" : "") + n;
+      return `${z(d.getDate())}.${z(d.getMonth() + 1)}.${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
+    }
+
+    fetch('/api/gameStats')
+      .then(res => res.json())
+      .then(data => {
+        rows = data.rows;
+        renderTable();
+      });
+
+    function renderTable() {
+      if (!rows || rows.length === 0) {
+        document.getElementById('stats-table').innerHTML = "<p>No data available.</p>";
+        return;
+      }
+
+      const keys = ["player_name", ...Object.keys(rows[0]).filter(k => !["id", "player_id", "player_name"].includes(k))];
+
+      let displayRows = [...rows];
+      if (currentSort.key) {
+        displayRows.sort((a, b) => {
+          let va = a[currentSort.key], vb = b[currentSort.key];
+          if (!isNaN(va) && !isNaN(vb)) {
+            return (Number(va) - Number(vb)) * currentSort.dir;
+          }
+          return (String(va)).localeCompare(String(vb)) * currentSort.dir;
+        });
+      }
+
+      let html = "<div style='overflow:auto'><table class='table table-dark table-bordered table-striped'><thead><tr>";
+      keys.forEach(key => {
+        const sortClass = currentSort.key === key ? (currentSort.dir === 1 ? "sorted-asc" : "sorted-desc") : "";
+        html += `<th class='${sortClass}' onclick="sortStats('${key}')">${key}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+
+      displayRows.forEach(row => {
+        html += "<tr>";
+        keys.forEach(key => {
+          let val = row[key];
+          if (key === "training_date") val = formatDate(val);
+          html += `<td>${val}</td>`;
+        });
+        html += "</tr>";
+      });
+
+      html += "</tbody></table></div>";
+      document.getElementById('stats-table').innerHTML = html;
+    }
+
+    window.sortStats = function(key) {
+      if (currentSort.key === key) {
+        currentSort.dir *= -1;
+      } else {
+        currentSort.key = key;
+        currentSort.dir = 1;
+      }
+      renderTable();
+    }
+  </script>
+</body>
+</html>
