@@ -1,4 +1,5 @@
--- Players-List 
+-- Players-List
+CREATE SEQUENCE IF NOT EXISTS players_id_seq; -- fixes a bug when creating tables
 CREATE TABLE IF NOT EXISTS players
 (
     id integer NOT NULL DEFAULT nextval('players_id_seq'::regclass),
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS game_stats(
 );
 
 -- Training: Around the clock singles
+CREATE SEQUENCE IF NOT EXISTS training_singles_id_seq; -- fixes a bug when creating tables
 CREATE TABLE IF NOT EXISTS training_singles
 (
     id integer NOT NULL DEFAULT nextval('training_singles_id_seq'::regclass),
@@ -54,6 +56,7 @@ CREATE TABLE IF NOT EXISTS training_singles
 
 
 -- Training: Around the clock doubles
+CREATE SEQUENCE IF NOT EXISTS training_doubles_id_seq; -- fixes a bug when creating tables
 CREATE TABLE IF NOT EXISTS training_doubles
 (
     id integer NOT NULL DEFAULT nextval('training_doubles_id_seq'::regclass),
