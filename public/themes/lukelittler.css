@@ -1,0 +1,66 @@
+/*
+Theme Styling created by lucajDev
+Github: https://github.com/lucajDev
+Made with ❤️ for Jan Baron
+ */
+
+body{
+    background-color: #0A002F !important;
+    background-image: url("littlerdots.svg");
+    background-position: center;
+    background-size: auto;
+    background-repeat: repeat;
+}
+body h1, body h2, body h3, body h4, body h5, body p, body button{
+    color: #EEE645 !important;
+}
+
+#number-buttons button, #function-buttons button{
+    background-color: #382754;
+    border:1px solid #EEE645 !important;
+    transition: 0.4s ease-in-out;
+}
+#number-buttons button:hover{
+    background-color: #2d1f43;
+}
+
+#new-player-name{
+    background-color: #382754;
+    color: #EEE645;
+    border: 1px solid #EEE645;
+}
+#new-player-name::placeholder{
+    color: #EEE645 !important;
+    opacity: 1;
+}
+
+#player-list div{
+    color: #EEE645 !important;
+}
+
+#btn-undo{
+    background-color: #EEE645 !important;
+    border:1px solid #382754 !important;
+    transition: 0.4s ease-in-out !important;
+    color: #382754 !important;
+}
+
+#btn-undo:hover{
+    background-color: #beb837 !important;
+}
+
+#log{
+    color: #EEE645 !important;
+}
+
+#dropdownMenuButton, #dropdownStatsButton, .dropdown-menu{
+    background-color: #382754;
+    color: #EEE645 !important;
+}
+
+.dropdown-menu a{
+    color: #EEE645 !important;
+}
+.dropdown-menu a:hover{
+    background-color: #2d1f43;
+}
