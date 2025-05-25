@@ -132,8 +132,8 @@ app.post('/api/updateStats', async (req, res) => {
     const playerId = playerRes.rows[0].id;
     const playerNameDb = playerRes.rows[0].name;
 
-    // Calculate average only for winners
-    const avg = isWin ? ((scoreStart || 501) / dartsThrown) * 3 : 0;
+    // Calculate 9-dart average if at least 9 darts thrown
+    const avg = dartsThrown >= 9 ? ((scoreStart || 501) / dartsThrown) * 3 : 0;
 
     // Check if entry exists
     const result = await pool.query('SELECT * FROM game_stats WHERE player_id = $1', [playerId]);
@@ -144,9 +144,8 @@ app.post('/api/updateStats', async (req, res) => {
       const updatedWins = isWin ? existing.wins + 1 : existing.wins;
       const updatedLosses = !isWin ? existing.losses + 1 : existing.losses;
       const updatedHighCheckout = Math.max(existing.highest_checkout || 0, checkout || 0);
-      const updatedHighAverage = isWin
-        ? Math.max(existing.highest_9dart_avg || 0, avg)
-        : existing.highest_9dart_avg;
+      const updatedHighAverage = Math.max(existing.highest_9dart_avg || 0, avg);
+
 
       await pool.query(
         `UPDATE game_stats
@@ -169,7 +168,7 @@ app.post('/api/updateStats', async (req, res) => {
           isWin ? 1 : 0,
           isWin ? 0 : 1,
           checkout || 0,
-          isWin ? avg : 0
+          avg
         ]
       );
     }

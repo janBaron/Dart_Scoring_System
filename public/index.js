@@ -409,42 +409,32 @@ function resetScores() {
   updatePlayerList();
 };
 
-// Saves the winner’s game data and updates stats for all players
+// Saves game data and updates stats for all players
 function saveGame(winner) {
-  fetch("/api/saveGame", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      playerName: winner.name,
-      scoreStart: initialScore,
-      scoreEnd: 0,
-      dartsThrown: winner.dartsThrown
-    })
-  });
-  fetch("/api/updateStats", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      playerName: winner.name,
-      dartsThrown: winner.dartsThrown,
-      checkout: winner.roundStart,
-      isWin: true,
-      scoreStart: initialScore
-    })
-  });
-  players.forEach(loser => {
-    if (loser.name !== winner.name) {
-      fetch("/api/updateStats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          playerName: loser.name,
-          dartsThrown: loser.dartsThrown,
-          isWin: false,
-          scoreStart: initialScore
-        })
-      });
-    }
+  players.forEach(player => {
+    const isWinner = player.name === winner.name;
+
+    fetch("/api/saveGame", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerName: player.name,
+        scoreStart: initialScore,
+        scoreEnd: isWinner ? 0 : player.score,
+        dartsThrown: player.dartsThrown
+      })
+    });
+    fetch("/api/updateStats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerName: player.name,
+        dartsThrown: player.dartsThrown,
+        checkout: isWinner ? player.roundStart : 0,
+        isWin: isWinner,
+        scoreStart: initialScore
+      })
+    });
   });
 };
 
