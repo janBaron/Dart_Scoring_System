@@ -214,7 +214,13 @@ newPlayerNameInput.addEventListener("keydown", function (event) {
       .then(res => res.json())
       .then(data => {
         if (data.success && !players.find(p => p.name === newName)) {
-          players.push({ name: newName, score: initialScore, roundStart: initialScore, dartsThrown: 0 });
+          players.push({
+    name: newName,
+    score: initialScore,
+    roundStart: initialScore,
+    dartsThrown: 0,
+    scoreHistory: [] 
+  });
           updatePlayerList();
         }
         newPlayerNameInput.value = "";
@@ -313,14 +319,25 @@ function updatePlayerList() {
       const throws = player.lastRoundThrows || [];
       throwsDisplay = [0, 1, 2].map(i => throws[i] !== undefined ? throws[i] : "-").join(" ");
     }
+
+    // Durchschnitt berechnen – nur wenn mind. 3 Würfe gemacht wurden
+    let avgDisplay = "-";
+    const total = player.scoreHistory?.reduce((sum, p) => sum + p, 0) || 0;
+    const darts = player.scoreHistory?.length || 0;
+
+    if (darts >= 3) {
+      const avg = (total / darts) * 3;
+      avgDisplay = avg.toFixed(2);
+    }
+
     const playerDiv = document.createElement("div");
-    playerDiv.textContent = `${player.name} - ${player.score}   |   ${throwsDisplay}`;
+    playerDiv.textContent = `${player.name} - ${player.score} | ${throwsDisplay} | Ø ${avgDisplay}`;
     if (index === currentPlayerIndex) {
       playerDiv.style.fontWeight = "bold";
     }
     playerListDiv.appendChild(playerDiv);
   });
-};
+}
 
 // Handles a score input during gameplay or training mode
 function handleScore(value) {
@@ -329,7 +346,9 @@ function handleScore(value) {
     gameStarted = true;
     newPlayerNameInput.style.display = "none";
   }
+
   saveHistorySnapshot();
+
   const actualScore = value * multiplier;
   const doubleFlagThisThrow = isDouble;
   isDouble = false;
@@ -337,51 +356,55 @@ function handleScore(value) {
   btnDouble.className = "btn btn-secondary btn-dart-control";
   btnTripple.className = "btn btn-secondary btn-dart-control";
   btnSb.textContent = "SB";
-  const currentPlayer = players[currentPlayerIndex];
-  if (gameMode === "normal") {
-    currentPlayer.dartsThrown++;
 
-    if (!currentPlayer.currentRoundThrows) currentPlayer.currentRoundThrows = [];
-    currentPlayer.currentRoundThrows.push(actualScore);
+  const currentPlayer = players[currentPlayerIndex]; // 👈 Muss *vor* .scoreHistory gesetzt sein!
+  currentPlayer.scoreHistory.push(actualScore);       // ✅ Jetzt korrekt
+  currentPlayer.dartsThrown++;
 
-    const newScore = currentPlayer.score - actualScore;
-    if (newScore < 2 && newScore !== 0) {
-      currentPlayer.score = currentPlayer.roundStart;
-      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-      currentPlayer.currentRoundThrows = [];
-      nextPlayer();
-      return;
-    }
-    currentPlayer.score = newScore;
-    updateCheckoutLog(currentPlayer);
-    if (newScore === 0 && doubleFlagThisThrow) {
-      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-      currentPlayer.currentRoundThrows = [];
-      saveGame(currentPlayer);
-      alert(`${currentPlayer.name} wins!`);
-      resetScores();
-      return;
-    }
-    if (newScore === 0 && !doubleFlagThisThrow) {
-      alert("Check out with double!");
-      currentPlayer.score = currentPlayer.roundStart;
-      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-      currentPlayer.currentRoundThrows = [];
-      nextPlayer();
-      return;
-    }
-    throwsCurrentRound--;
-    if (throwsCurrentRound === 0) {
-      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-      currentPlayer.currentRoundThrows = [];
-      nextPlayer();
-      return;
-    }
-    updatePlayerList();
-  } else {
-    handleTrainingScore(currentPlayer, actualScore);
+  if (!currentPlayer.currentRoundThrows) currentPlayer.currentRoundThrows = [];
+  currentPlayer.currentRoundThrows.push(actualScore);
+
+  const newScore = currentPlayer.score - actualScore;
+  if (newScore < 2 && newScore !== 0) {
+    currentPlayer.score = currentPlayer.roundStart;
+    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+    currentPlayer.currentRoundThrows = [];
+    nextPlayer();
+    return;
   }
-};
+
+  currentPlayer.score = newScore;
+  updateCheckoutLog(currentPlayer);
+
+  if (newScore === 0 && doubleFlagThisThrow) {
+    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+    currentPlayer.currentRoundThrows = [];
+    saveGame(currentPlayer);
+    alert(`${currentPlayer.name} wins!`);
+    resetScores();
+    return;
+  }
+
+  if (newScore === 0 && !doubleFlagThisThrow) {
+    alert("Check out with double!");
+    currentPlayer.score = currentPlayer.roundStart;
+    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+    currentPlayer.currentRoundThrows = [];
+    nextPlayer();
+    return;
+  }
+
+  throwsCurrentRound--;
+  if (throwsCurrentRound === 0) {
+    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+    currentPlayer.currentRoundThrows = [];
+    nextPlayer();
+    return;
+  }
+
+  updatePlayerList();
+}
+
 
 // Moves to the next player and resets the round state
 function nextPlayer() {
@@ -401,6 +424,7 @@ function resetScores() {
     p.dartsThrown = 0;
     p.currentRoundThrows = [];
     p.lastRoundThrows = [];
+    p.scoreHistory = []; // 👈 Score-Verlauf zurücksetzen
   });
   startPlayerIndex = (startPlayerIndex + 1) % players.length;
   currentPlayerIndex = startPlayerIndex;

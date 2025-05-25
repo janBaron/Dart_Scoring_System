@@ -134,12 +134,14 @@ start http://localhost:3000
 ```
 dart-scoring-system/
 │
-├── public/               # Frontend HTML, CSS, JS
+├── public/  # Frontend HTML, CSS, JS
+│   ├── themes/     
 │   ├── index.html
 │   ├── stats_game.html
 │   ├── stats_singles.html
 │   ├── stats_doubles.html
-│   └── index.js
+│   ├── index.js
+│   └── themechanger.js
 │
 ├── db.sql                # PostgreSQL schema
 ├── server.js             # Express backend
