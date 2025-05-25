@@ -11,6 +11,9 @@
     integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
     crossorigin="anonymous"
   />
+  <!-- Link for Theme href -->
+  <link id="theme-stylesheet" rel="stylesheet" href="">
+  <!-- Link for Theme href end -->
   <style>
     body {
       background-color: #1a1822;
@@ -135,6 +138,14 @@
       </ul>
     </div>
 
+    <!-- Theme Selection -->
+    <div class="lucajdev-theme-selector dropdown">
+      <select id="theme-select">
+        <option value="Default">Theme: Default</option>
+        <option value="LukeLittler">Theme: Luke Littler</option>
+      </select>
+    </div>
+
     <!-- Dynamic player list -->
     <div id="player-list"></div>
 
@@ -171,6 +182,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
   <script src="index.js"></script>
+  <script src="themechanger.js"></script>
 </body>
 
 </html>

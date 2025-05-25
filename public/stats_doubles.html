@@ -27,6 +27,17 @@
     let currentSort = { key: null, dir: 1 };
     let chartInstance = null;
 
+    (function applyThemeFromLocalStorage() {
+  const themeName = localStorage.getItem('selectedTheme');
+  if (!themeName || themeName === 'default') return; // Kein Theme oder Default -> nix tun
+
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `themes/${themeName}.css`;
+  link.id = 'theme-stylesheet';
+  document.head.appendChild(link);
+})();
+
     function formatDate(dateString) {
       if (!dateString) return "";
       const d = new Date(dateString);
