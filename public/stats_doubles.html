@@ -137,6 +137,12 @@
       });
     }
 
+    window.addEventListener('storage', (event) => {
+  if (event.key === 'selectedTheme') {
+    location.reload();
+  }
+});
+
     window.sortStats = function (key) {
       if (currentSort.key === key) {
         currentSort.dir *= -1;

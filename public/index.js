@@ -293,6 +293,12 @@ document.getElementById("open-stats-doubles").addEventListener("click", e => {
   window.open("/stats_doubles.html", "_blank");
 });
 
+window.addEventListener('storage', (event) => {
+  if (event.key === 'selectedTheme') {
+    location.reload(); 
+  }
+});
+
 //Functions
 
 // Updates the visual player list with name, score, and current or last round throws
