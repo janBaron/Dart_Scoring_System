@@ -11,7 +11,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'Dart_Scores',
-  password: 'postgres',
+  password: 'your_password',
   port: 5432,
 });
 

@@ -320,18 +320,23 @@ function updatePlayerList() {
       throwsDisplay = [0, 1, 2].map(i => throws[i] !== undefined ? throws[i] : "-").join(" ");
     }
 
-    // Durchschnitt berechnen – nur wenn mind. 3 Würfe gemacht wurden
-    let avgDisplay = "-";
-    const total = player.scoreHistory?.reduce((sum, p) => sum + p, 0) || 0;
-    const darts = player.scoreHistory?.length || 0;
+    let playerText = `${player.name} - ${player.score} | ${throwsDisplay}`;
 
-    if (darts >= 3) {
-      const avg = (total / darts) * 3;
-      avgDisplay = avg.toFixed(2);
+    if (gameMode === "normal") {   
+      let avgDisplay = "-";
+      const total = player.scoreHistory?.reduce((sum, p) => sum + p, 0) || 0;
+      const darts = player.scoreHistory?.length || 0;
+
+      if (darts >= 3) {
+        const avg = (total / darts) * 3;
+        avgDisplay = avg.toFixed(2);
+      }
+
+      playerText += ` | Ø ${avgDisplay}`;
     }
 
     const playerDiv = document.createElement("div");
-    playerDiv.textContent = `${player.name} - ${player.score} | ${throwsDisplay} | Ø ${avgDisplay}`;
+    playerDiv.textContent = playerText;
     if (index === currentPlayerIndex) {
       playerDiv.style.fontWeight = "bold";
     }
@@ -357,54 +362,60 @@ function handleScore(value) {
   btnTripple.className = "btn btn-secondary btn-dart-control";
   btnSb.textContent = "SB";
 
-  const currentPlayer = players[currentPlayerIndex]; // 👈 Muss *vor* .scoreHistory gesetzt sein!
-  currentPlayer.scoreHistory.push(actualScore);       // ✅ Jetzt korrekt
-  currentPlayer.dartsThrown++;
+  const currentPlayer = players[currentPlayerIndex];
 
-  if (!currentPlayer.currentRoundThrows) currentPlayer.currentRoundThrows = [];
-  currentPlayer.currentRoundThrows.push(actualScore);
+- currentPlayer.scoreHistory.push(actualScore);  
 
-  const newScore = currentPlayer.score - actualScore;
-  if (newScore < 2 && newScore !== 0) {
-    currentPlayer.score = currentPlayer.roundStart;
-    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-    currentPlayer.currentRoundThrows = [];
-    nextPlayer();
-    return;
+  if (gameMode === "normal") {
++   currentPlayer.scoreHistory.push(actualScore);  
+    currentPlayer.dartsThrown++;
+
+    if (!currentPlayer.currentRoundThrows) currentPlayer.currentRoundThrows = [];
+    currentPlayer.currentRoundThrows.push(actualScore);
+
+    const newScore = currentPlayer.score - actualScore;
+    if (newScore < 2 && newScore !== 0) {
+      currentPlayer.score = currentPlayer.roundStart;
+      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+      currentPlayer.currentRoundThrows = [];
+      nextPlayer();
+      return;
+    }
+
+    currentPlayer.score = newScore;
+    updateCheckoutLog(currentPlayer);
+
+    if (newScore === 0 && doubleFlagThisThrow) {
+      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+      currentPlayer.currentRoundThrows = [];
+      saveGame(currentPlayer);
+      alert(`${currentPlayer.name} wins!`);
+      resetScores();
+      return;
+    }
+
+    if (newScore === 0 && !doubleFlagThisThrow) {
+      alert("Check out with double!");
+      currentPlayer.score = currentPlayer.roundStart;
+      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+      currentPlayer.currentRoundThrows = [];
+      nextPlayer();
+      return;
+    }
+
+    throwsCurrentRound--;
+    if (throwsCurrentRound === 0) {
+      currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
+      currentPlayer.currentRoundThrows = [];
+      nextPlayer();
+      return;
+    }
+
+    updatePlayerList();
+  } else {
++   handleTrainingScore(currentPlayer, actualScore);  
   }
-
-  currentPlayer.score = newScore;
-  updateCheckoutLog(currentPlayer);
-
-  if (newScore === 0 && doubleFlagThisThrow) {
-    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-    currentPlayer.currentRoundThrows = [];
-    saveGame(currentPlayer);
-    alert(`${currentPlayer.name} wins!`);
-    resetScores();
-    return;
-  }
-
-  if (newScore === 0 && !doubleFlagThisThrow) {
-    alert("Check out with double!");
-    currentPlayer.score = currentPlayer.roundStart;
-    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-    currentPlayer.currentRoundThrows = [];
-    nextPlayer();
-    return;
-  }
-
-  throwsCurrentRound--;
-  if (throwsCurrentRound === 0) {
-    currentPlayer.lastRoundThrows = [...(currentPlayer.currentRoundThrows || [])];
-    currentPlayer.currentRoundThrows = [];
-    nextPlayer();
-    return;
-  }
-
-  updatePlayerList();
-}
-
+};
 
 // Moves to the next player and resets the round state
 function nextPlayer() {
@@ -465,7 +476,17 @@ function saveGame(winner) {
 // Starts a training session (singles or doubles)
 function startTraining(mode) {
   newPlayerNameInput.style.display = "none";
-  players = [{ name: "Training", score: 0, roundStart: 0, dartsThrown: 0 }];
+ players = [{ name: "Training", score: 0, roundStart: 0, dartsThrown: 0 }];
+players = [{
+   name: "Training",
+   score: 0,
+   roundStart: 0,
+   dartsThrown: 0,
+  scoreHistory: [],
+   currentRoundThrows: [],
+   lastRoundThrows: [],
+ }];
+
   currentPlayerIndex = 0;
   gameMode = mode === "singles" ? "trainingSingles" : "trainingDoubles";
   players[0].nextTarget = 1;
@@ -496,12 +517,14 @@ function handleTrainingScore(player, score) {
 function saveTraining(player) {
   const endpoint = gameMode === "trainingSingles" ? "/api/training/singles" : "/api/training/doubles";
   let attempts = {};
-  for (let i = 1; i <= 20; i++) {
-    attempts[`tries_target_${i}`] = player.attempts[i];
+    for (let i = 1; i <= 20; i++) {
+    attempts[`tries_target_${i}`] = player.attempts[i] !== undefined ? player.attempts[i] : null;
   }
+
   const attemptsArray = Object.values(attempts);
-  const sumTries = attemptsArray.reduce((sum, n) => sum + n, 0);
-  const averageTries = attemptsArray.length ? (sumTries / attemptsArray.length) : null;
+  const sumTries = attemptsArray.reduce((sum, n) => sum + (n !== null ? n : 0), 0); 
+  const averageTries = attemptsArray.filter(n => n !== null).length ? (sumTries / attemptsArray.filter(n => n !== null).length) : null;
+
   fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
