@@ -505,10 +505,12 @@ function handleTrainingScore(player, score) {
     player.nextTarget++;
     player.currentAttempts = 0;
     if (player.nextTarget > 20) {
-      saveTraining(player);
-      alert("Training finished");
-      return;
-    }
+    saveTraining(player);
+    alert("Training finished");
+    // Reset für neues Training
+    startTraining(gameMode === "trainingDoubles" ? "doubles" : "singles");
+    return;
+  }
   }
   updateLog(`Target ${player.nextTarget}, Versuch ${player.currentAttempts}`);
 };
